@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>我的随笔</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <style>
+        body { max-width: 600px; margin: 20px auto; padding: 20px; line-height: 1.8; font-size: 18px; }
+        nav { margin-bottom: 40px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        a { color: #333; text-decoration: none; display: block; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div id="content">加载中...</div>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        // 获取 URL 参数中的文件名，如果没有就显示目录
+        const params = new URLSearchParams(window.location.search);
+        const file = params.get('p') || 'menu.md';
+        fetch(file).then(response => response.text()).then(text => {
+            document.getElementById('content').innerHTML = marked.parse(text);
+        });
+    </script>
+</body>
+</html>
