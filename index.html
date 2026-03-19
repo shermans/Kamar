@@ -19,53 +19,31 @@
         <nav id="nav" style="display:none;"><a href="?" class="back-btn">⬅ 返回目录</a></nav>
         <div id="content">正在翻开书本...</div>
     </div>
+<script>
+    const contentDiv = document.getElementById('content');
+    const nav = document.getElementById('nav');
+    const params = new URLSearchParams(window.location.search);
+    const fileName = params.get('p');
 
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script>
-        // 配置你的信息
-        const USER = 'shermans'; 
-        const REPO = 'Kamar';
-        
-        const contentDiv = document.getElementById('content');
-        const nav = document.getElementById('nav');
-        const params = new URLSearchParams(window.location.search);
-        const fileName = params.get('p');
-
-        if (fileName) {
-            // --- 场景 A：显示文章内容 ---
-            nav.style.display = 'block';
-            fetch(fileName)
-                .then(res => res.text())
-                .then(text => {
-                    contentDiv.innerHTML = marked.parse(text);
-                    document.title = fileName.replace('.md', '');
-                });
-        } else {
-            // --- 场景 B：自动生成目录 ---
-            document.title = "书库目录";
-            contentDiv.innerHTML = "<h1>我的目录</h1><div id='list'></div>";
-            
-            // 调用 GitHub API 获取文件列表
-            fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/`)
-                .then(res => res.json())
-                .then(data => {
-                    const listDiv = document.getElementById('list');
-                    data.forEach(file => {
-                        // 只显示 .md 文件，且排除掉特殊的 README 和 index.html
-                        if (file.name.endsWith('.md') && file.name.toLowerCase() !== 'readme.md') {
-                            const link = document.createElement('a');
-                            link.href = `?p=${file.name}`;
-                            link.className = 'menu-item';
-                            link.innerText = file.name.replace('.md', ''); // 去掉后缀作为标题
-                            listDiv.appendChild(link);
-                        }
-                    });
-                    if(listDiv.innerHTML === "") contentDiv.innerHTML += "<p>库里还没有文章哦，去新建一个 .md 文件吧！</p>";
-                })
-                。catch(err => {
-                    contentDiv.innerHTML = "获取目录失败，请检查用户名和仓库名配置。";
-                });
-        }
-    </script>
+    if (fileName) {
+        nav.style.display = 'block';
+        // 直接从当前路径抓取文件，不需要 API
+        fetch(fileName)
+            .then(res => {
+                if(!res.ok) throw new Error();
+                return res.text();
+            })
+            .then(text => {
+                document.getElementById('content').innerHTML = marked.parse(text);
+            })
+            .catch(() => {
+                contentDiv.innerHTML = "读取失败，请检查文件名 " + fileName + " 是否存在";
+            });
+    } else {
+        // 如果没有参数，提示手动去 menu.md（因为不调 API 无法自动列出文件）
+        contentDiv.innerHTML = "<h1>我的目录</h1><p>自动目录加载失败，请手动访问：</p><a href='?p=menu.md' class='menu-item'>点此进入手动目录</a>";
+    }
+</script>
+     
 </body>
 </html>
