@@ -1,26 +1,71 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>我的随笔</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <title>Kamar-Taj</title>
     <style>
-        body { max-width: 600px; margin: 20px auto; padding: 20px; line-height: 1.8; font-size: 18px; }
-        nav { margin-bottom: 40px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        a { color: #333; text-decoration: none; display: block; margin: 10px 0; }
+        body { max-width: 650px; margin: 0 auto; padding: 40px 20px; font-family: -apple-system, sans-serif; line-height: 1.8; color: #333; background: #fff; }
+        #content { min-height: 300px; }
+        /* 目录样式：大间距，方便手机点击 */
+        .menu-item { display: block; padding: 15px; margin: 10px 0; background: #f9f9f9; border-radius: 8px; text-decoration: none; color: #007bff; font-weight: 500; border: 1px solid #eee; }
+        nav { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .back-btn { text-decoration: none; color: #888; font-size: 14px; }
+        h1 { font-size: 24px; border-bottom: 2px solid #007bff; display: inline-block; padding-bottom: 5px; }
     </style>
 </head>
 <body>
-    <div id="content">加载中...</div>
+    <div id="app">
+        <nav id="nav" style="display:none;"><a href="?" class="back-btn">⬅ 返回目录</a></nav>
+        <div id="content">正在翻开书本...</div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
-        // 获取 URL 参数中的文件名，如果没有就显示目录
+        // 配置你的信息
+        const USER = '你的GitHub用户名'; 
+        const REPO = '你的仓库名';
+        
+        const contentDiv = document.getElementById('content');
+        const nav = document.getElementById('nav');
         const params = new URLSearchParams(window.location.search);
-        const file = params.get('p') || 'menu.md';
-        fetch(file).then(response => response.text()).then(text => {
-            document.getElementById('content').innerHTML = marked.parse(text);
-        });
+        const fileName = params.get('p');
+
+        if (fileName) {
+            // --- 场景 A：显示文章内容 ---
+            nav.style.display = 'block';
+            fetch(fileName)
+                .then(res => res.text())
+                .then(text => {
+                    contentDiv.innerHTML = marked.parse(text);
+                    document.title = fileName.replace('.md', '');
+                });
+        } else {
+            // --- 场景 B：自动生成目录 ---
+            document.title = "书库目录";
+            contentDiv.innerHTML = "<h1>我的目录</h1><div id='list'></div>";
+            
+            // 调用 GitHub API 获取文件列表
+            fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/`)
+                .then(res => res.json())
+                .then(data => {
+                    const listDiv = document.getElementById('list');
+                    data.forEach(file => {
+                        // 只显示 .md 文件，且排除掉特殊的 README 和 index.html
+                        if (file.name.endsWith('.md') && file.name.toLowerCase() !== 'readme.md') {
+                            const link = document.createElement('a');
+                            link.href = `?p=${file.name}`;
+                            link.className = 'menu-item';
+                            link.innerText = file.name.replace('.md', ''); // 去掉后缀作为标题
+                            listDiv.appendChild(link);
+                        }
+                    });
+                    if(listDiv.innerHTML === "") contentDiv.innerHTML += "<p>库里还没有文章哦，去新建一个 .md 文件吧！</p>";
+                })
+                。catch(err => {
+                    contentDiv.innerHTML = "获取目录失败，请检查用户名和仓库名配置。";
+                });
+        }
     </script>
 </body>
 </html>
